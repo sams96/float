@@ -30,6 +30,7 @@ func main() {
 func (a *app) handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("request received")
 	a.debounce(a.run)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (a *app) run() {
