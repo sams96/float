@@ -1,7 +1,9 @@
+# see https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images
 name: Create and publish a Docker image
 
 on:
   release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
