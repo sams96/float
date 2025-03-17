@@ -29,7 +29,7 @@ func main() {
 		cmd:      os.Getenv("FLOAT_CMD"),
 	}
 
-	log.Println("float started")
+	log.Println("float started with", debounceDur.String(), "debounce duration, command:", a.cmd)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:41232", http.HandlerFunc(a.handler)))
 }
