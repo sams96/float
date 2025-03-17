@@ -10,7 +10,7 @@ COPY . ${GOPATH}/src/github.com/sams96/float/
 
 RUN go build -o /go/bin/float .
 
-FROM alpine:3.21
+FROM docker
 
 COPY --from=builder /go/bin/float /usr/bin/float
 

@@ -36,6 +36,7 @@ func (a *app) handler(w http.ResponseWriter, r *http.Request) {
 func (a *app) run() {
 	cmd := exec.Command("/bin/sh", "-c", a.cmd)
 	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err := cmd.Run()
 	if err != nil {
 		log.Println(err)
