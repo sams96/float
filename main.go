@@ -14,11 +14,18 @@ type app struct {
 	cmd      string
 }
 
-var debounceTime = time.Second
+var debounceDefault = 15 * time.Minute
 
 func main() {
+	debounceStr := os.Getenv("FLOAT_DEBOUNCE_TIME")
+	debounceDur, err := time.ParseDuration(debounceStr)
+	if err != nil {
+		log.Println("Failed to parse debounce duration; using default of", debounceDefault.String())
+		debounceDur = debounceDefault
+	}
+
 	a := app{
-		debounce: debounce(debounceTime),
+		debounce: debounce(debounceDur),
 		cmd:      os.Getenv("FLOAT_CMD"),
 	}
 
