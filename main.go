@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-type app struct {
-	debounce debouncer
-	cmd      string
-}
-
 var debounceDefault = 15 * time.Minute
 
 func main() {
@@ -24,36 +19,28 @@ func main() {
 		debounceDur = debounceDefault
 	}
 
-	a := app{
-		debounce: debounce(debounceDur),
-		cmd:      os.Getenv("FLOAT_CMD"),
-	}
+	c := os.Getenv("FLOAT_CMD")
+	debounced := debouncer(debounceDur, func() {
+		cmd := exec.Command("/bin/sh", "-c", c)
+		cmd.Stdout, cmd.Stderr = log.Writer(), log.Writer()
+		err := cmd.Run()
+		if err != nil {
+			log.Println(err)
+		}
+	})
 
-	log.Println("float started with", debounceDur.String(), "debounce duration, command:", a.cmd)
-
-	log.Fatal(http.ListenAndServe("0.0.0.0:41232", http.HandlerFunc(a.handler)))
+	log.Println("float started with debounce duration:", debounceDur.String(), "command:", c)
+	log.Fatal(http.ListenAndServe("0.0.0.0:41232",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Println("request received")
+			debounced()
+			w.WriteHeader(http.StatusNoContent)
+		})),
+	)
 }
-
-func (a *app) handler(w http.ResponseWriter, r *http.Request) {
-	log.Println("request received")
-	a.debounce(a.run)
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (a *app) run() {
-	cmd := exec.Command("/bin/sh", "-c", a.cmd)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	err := cmd.Run()
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-type debouncer func(f func())
 
 // credit to https://github.com/bep/debounce
-func debounce(after time.Duration) debouncer {
+func debouncer(after time.Duration, f func()) func() {
 	d := &struct {
 		mu    sync.Mutex
 		after time.Duration
@@ -62,7 +49,7 @@ func debounce(after time.Duration) debouncer {
 		after: after,
 	}
 
-	return func(f func()) {
+	return func() {
 		d.mu.Lock()
 		defer d.mu.Unlock()
 
